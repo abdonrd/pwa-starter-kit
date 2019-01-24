@@ -13,7 +13,6 @@ import { setPassiveTouchGestures } from '@polymer/polymer/lib/utils/settings.js'
 import { connect } from 'pwa-helpers/connect-mixin.js';
 import { installMediaQueryWatcher } from 'pwa-helpers/media-query.js';
 import { installOfflineWatcher } from 'pwa-helpers/network.js';
-import { installRouter } from 'pwa-helpers/router.js';
 import { updateMetadata } from 'pwa-helpers/metadata.js';
 
 // This element is connected to the Redux store.
@@ -151,14 +150,6 @@ class MyApp extends connect(store)(LitElement) {
           min-height: 100vh;
         }
 
-        .page {
-          display: none;
-        }
-
-        .page[active] {
-          display: block;
-        }
-
         footer {
           padding: 24px;
           background: var(--app-drawer-background-color);
@@ -222,10 +213,7 @@ class MyApp extends connect(store)(LitElement) {
 
       <!-- Main content -->
       <main role="main" class="main-content">
-        <my-view1 class="page" ?active="${this._page === 'view1'}"></my-view1>
-        <my-view2 class="page" ?active="${this._page === 'view2'}"></my-view2>
-        <my-view3 class="page" ?active="${this._page === 'view3'}"></my-view3>
-        <my-view404 class="page" ?active="${this._page === 'view404'}"></my-view404>
+        <!-- added / removed dynamically by the router -->
       </main>
 
       <footer>
@@ -246,7 +234,16 @@ class MyApp extends connect(store)(LitElement) {
   }
 
   firstUpdated() {
-    installRouter((location) => store.dispatch(navigate(decodeURIComponent(location.pathname))));
+    window.addEventListener('vaadin-router-location-changed', event =>
+      store.dispatch(navigate(event.detail.location))
+    );
+
+    // To have better first-load performance, defer loading all routing code
+    // until after the app shell is rendered.
+    import('../router.js').then((routing) => {
+      routing.init(this.shadowRoot.querySelector('main'));
+    });
+
     installOfflineWatcher((offline) => store.dispatch(updateOffline(offline)));
     installMediaQueryWatcher(`(min-width: 460px)`,
         () => store.dispatch(updateDrawerState(false)));
