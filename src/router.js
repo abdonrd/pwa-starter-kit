@@ -1,7 +1,7 @@
 import { Router } from '@vaadin/router';
 
 export function init(outlet) {
-  const router = new Router(outlet);
+  const router = new Router(outlet, { baseUrl: '/' });
 
   router.setRoutes([
     {
